@@ -8,6 +8,12 @@ public class Polygon {
     public Polygon() {
         this.points = new ArrayList<Point2D>();
     }
+
+    public Polygon(ArrayList<Point2D> points) {
+        this.points = points;
+    }
+
+
     public Point2D getPoint(int index) {
         return points.get(index);
     }
@@ -19,4 +25,5 @@ public class Polygon {
     public int getCount() {
         return points.size();
     }
+
 }

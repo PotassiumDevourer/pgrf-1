@@ -9,7 +9,8 @@ public class RasterBufferedImage implements Raster {
     }
     @Override
     public void setPixel(int x, int y, int color) {
-        // TODO podminka
+        if(x >= getWidth() || x < 0 || y < 0 || y >= getHeight())
+            return;
         image.setRGB(x, y, color);
     }
 
