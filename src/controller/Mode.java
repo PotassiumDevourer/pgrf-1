@@ -1,5 +1,5 @@
 package controller;
 
 public enum Mode {
-    Line, StrictLine, Polygon
+   None, Line, StrictLine, Polygon, Edit
 }

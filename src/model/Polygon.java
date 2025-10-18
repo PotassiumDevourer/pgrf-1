@@ -4,9 +4,22 @@ import java.util.ArrayList;
 
 public class Polygon {
     private ArrayList<Point2D> points;
+    private int color1;
+    private int color2;
 
+    public Polygon(int color1, int color2) {
+        this.points = new ArrayList<Point2D>();
+        this.color1 = color1;
+        this.color2 = color2;
+    }
     public Polygon() {
         this.points = new ArrayList<Point2D>();
+        this.color1 = 0xFF0000;
+        this.color2 = 0xFF0000;
+    }
+
+    public void removePoint(int index) {
+        points.remove(index);
     }
 
     public Polygon(ArrayList<Point2D> points) {
@@ -22,8 +35,14 @@ public class Polygon {
         points.add(point);
     }
 
+    public void setPoint(int index, Point2D point) {
+        points.set(index, point);
+    }
+
     public int getCount() {
         return points.size();
     }
+    public int getColor1() {return color1;}
+    public int getColor2() {return color2;}
 
 }
