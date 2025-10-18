@@ -231,7 +231,7 @@ public class Controller2D {
                       color1 = getColorFromDialog(color1);
                       break;
                   case KeyEvent.VK_W:
-                      color1 = color2;
+                      color2 = color1;
                       break;
                   case KeyEvent.VK_T:
                       color2 = getColorFromDialog(color2);
