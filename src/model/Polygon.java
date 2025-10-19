@@ -12,6 +12,7 @@ public class Polygon {
         this.color1 = color1;
         this.color2 = color2;
     }
+
     public Polygon() {
         this.points = new ArrayList<Point2D>();
         this.color1 = 0xFF0000;
@@ -42,7 +43,13 @@ public class Polygon {
     public int getCount() {
         return points.size();
     }
-    public int getColor1() {return color1;}
-    public int getColor2() {return color2;}
+
+    public int getColor1() {
+        return color1;
+    }
+
+    public int getColor2() {
+        return color2;
+    }
 
 }

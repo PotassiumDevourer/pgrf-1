@@ -10,7 +10,7 @@ public final class PointAligner {
     public static int measureDistance(Point2D point1, Point2D point2) {
         double dx = Math.abs(point1.getX() - point2.getX());
         double dy = Math.abs(point1.getY() - point2.getY());
-        return (int)(Math.pow(dx, 2) + Math.pow(dy, 2));
+        return (int) (Math.pow(dx, 2) + Math.pow(dy, 2));
     }
 
     public static Point2D align(int x1, int y1, int x2, int y2) {
@@ -20,8 +20,8 @@ public final class PointAligner {
         int[] possibleValues = {Math.abs(dx), Math.abs(dy), Math.abs(dx - dy), Math.abs(dx + dy)};
         int minIndex = 0;
         int min = possibleValues[minIndex];
-        for(int i = 1; i < possibleValues.length;i++) {
-            if(min > possibleValues[i]) {
+        for (int i = 1; i < possibleValues.length; i++) {
+            if (min > possibleValues[i]) {
                 min = possibleValues[i];
                 minIndex = i;
 

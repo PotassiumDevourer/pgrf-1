@@ -7,12 +7,13 @@ import raster.RasterBufferedImage;
 
 public abstract class LineRasterizer {
     protected RasterBufferedImage raster;
+
     public LineRasterizer(RasterBufferedImage raster) {
         this.raster = raster;
     }
 
     public void rasterize(int x1, int y1, int x2, int y2, int color) {
-        rasterize(x1,y1,x2,y2, color, color);
+        rasterize(x1, y1, x2, y2, color, color);
     }
 
     public void rasterize(int x1, int y1, int x2, int y2, int color1, int color2) {
