@@ -1,17 +1,21 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 public class Polygon {
-    private ArrayList<Point2D> points;
-    private int color1;
-    private int color2;
+    protected ArrayList<Point2D> points;
+    protected int color1;
+    protected int color2;
+
+
 
     public Polygon(int color1, int color2) {
         this.points = new ArrayList<Point2D>();
         this.color1 = color1;
         this.color2 = color2;
     }
+
 
     public Polygon() {
         this.points = new ArrayList<Point2D>();
@@ -52,4 +56,16 @@ public class Polygon {
         return color2;
     }
 
+    public ArrayList<Point2D> getPoints() {
+        return points;
+    }
+
+
+    public void setColor1(int color1) {
+        this.color1 = color1;
+    }
+
+    public void setColor2(int color2) {
+        this.color2 = color2;
+    }
 }

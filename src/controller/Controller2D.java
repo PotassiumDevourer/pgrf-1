@@ -1,10 +1,15 @@
 package controller;
 
 
+import clip.Clipper;
+import fill.Filler;
+import fill.ScanLineFiller;
+import fill.SeedFiller;
 import model.Line;
 import model.Point2D;
 import model.PointLocation;
 import model.Polygon;
+import model.Rectangle;
 import rasterize.LineRasterizer;
 import rasterize.LineRasterizerTrivial;
 import rasterize.PolygonRasterizer;
@@ -26,6 +31,7 @@ public class Controller2D {
     private final int selectedColor;
     private final PolygonRasterizer polygonRasterizer;
     private Polygon currentPolygon;
+    private Polygon clippingPolygon;
     private Point2D lastPoint;
     private Point2D previewPoint;
     private final ArrayList<Polygon> polygons;
@@ -36,6 +42,7 @@ public class Controller2D {
     private Point2D originalEditLocation;
     private int color1 = 0xFF0000;
     private int color2 = 0xFF0000;
+    private ArrayList<Filler> fillers;
 
     public Controller2D(Panel panel) {
         this.panel = panel;
@@ -47,6 +54,7 @@ public class Controller2D {
         lineRasterizer = new LineRasterizerTrivial(panel.getRaster());
         polygonRasterizer = new PolygonRasterizer(lineRasterizer);
         mode = Mode.Polygon;
+        fillers = new ArrayList<Filler>();
 
     }
 
@@ -63,8 +71,10 @@ public class Controller2D {
         cancelInput();
         lines.clear();
         polygons.clear();
+        fillers.clear();
         lastPoint = null;
         currentPolygon = null;
+        clippingPolygon = null;
 
         drawScene();
     }
@@ -105,19 +115,67 @@ public class Controller2D {
 
     private void drawScene() {
         panel.getRaster().clear();
+        for (int i = 0; i < fillers.size(); i++) {
+            fillers.get(i).fill();
+        }
+        if(clippingPolygon != null && clippingPolygon.getCount() > 2 ) {
+            Clipper clipper = new Clipper();
+            if(currentPolygon != null && currentPolygon.getCount() > 2) {
+                ArrayList<Point2D> withPreview = new ArrayList<>();
+                withPreview.addAll(currentPolygon.getPoints());
+                withPreview.add(previewPoint);
+                var overlap = clipper.clip(clippingPolygon.getPoints(), withPreview);
+                ScanLineFiller filler = new ScanLineFiller(polygonRasterizer, lineRasterizer, new Polygon(overlap), 0x0000FF);
+                filler.fill();
+            }
+
+
+            for (int i = 0; i < polygons.size() ; i++) {
+
+                var current = polygons.get(i);
+                if(current == clippingPolygon)
+                    continue;
+                var thisOverlap =  clipper.clip(clippingPolygon.getPoints(), current.getPoints());
+                ScanLineFiller another = new ScanLineFiller(polygonRasterizer, lineRasterizer, new Polygon(thisOverlap), 0x0000FF);
+                another.fill();
+
+            }
+
+        }
+        for (int i = 0; i < polygons.size(); i++) {
+            polygonRasterizer.rasterize(polygons.get(i));
+        }
         for (int i = 0; i < lines.size(); i++) {
             lineRasterizer.rasterize(lines.get(i));
         }
         if (mode == Mode.Polygon && currentPolygon != null) {
-            polygonRasterizer.preview(currentPolygon, previewPoint);
+
         } else {
-            if (lastPoint != null)
-                lineRasterizer.rasterize(lastPoint, previewPoint, color1, color2);
+
         }
 
+        switch (mode) {
+            case Mode.Polygon:
+                if(currentPolygon != null)
+                    polygonRasterizer.preview(currentPolygon, previewPoint);
+                break;
+            case Mode.Line:
+                if (lastPoint != null)
+                    lineRasterizer.rasterize(lastPoint, previewPoint, color1, color2);
+                break;
+            case Mode.Rectangle:
+                if(currentPolygon != null) {
+                    if(currentPolygon.getCount() > 1)
+                    {
+                        polygonRasterizer.rasterize(new Rectangle(currentPolygon.getPoint(0), currentPolygon.getPoint(1), previewPoint, color1, color2));
+                    }
+                    else {
+                        polygonRasterizer.preview(currentPolygon, previewPoint);
+                    }
 
-        for (int i = 0; i < polygons.size(); i++) {
-            polygonRasterizer.rasterize(polygons.get(i));
+                }
+
+                break;
         }
         panel.repaint();
     }
@@ -150,12 +208,34 @@ public class Controller2D {
         panel.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
+                if(e.getButton() == MouseEvent.BUTTON3) {
+                    fillers.add(new SeedFiller(color1, panel.getRaster(), e.getX(), e.getY()));
+                    drawScene();
+                    return;
+                }
                 switch (mode) {
                     case Mode.Polygon:
                         if (currentPolygon == null || currentPolygon.getCount() < 1) {
                             initPolygon();
                         }
                         currentPolygon.addPoint(new Point2D(e.getX(), e.getY()));
+                        break;
+                    case Mode.Rectangle:
+
+                        if (currentPolygon == null || currentPolygon.getCount() < 1) {
+                            initPolygon();
+                        }
+                        currentPolygon.addPoint(new Point2D(e.getX(), e.getY()));
+                        if(currentPolygon.getCount() > 2) {
+                            var rectangle = new Rectangle(currentPolygon.getPoint(0), currentPolygon.getPoint(1),
+                                    currentPolygon.getPoint(currentPolygon.getCount() - 1), color1, color2);
+                            polygons.add(rectangle);
+                            fillers.add(new ScanLineFiller( polygonRasterizer, lineRasterizer,
+                                    rectangle, 0xFF0000));
+                            initPolygon();
+                            break;
+                        }
+
                         break;
                     case Mode.StrictLine:
                     case Mode.Line:
@@ -237,8 +317,22 @@ public class Controller2D {
                         setMode(Mode.Edit);
                         break;
                     case KeyEvent.VK_SHIFT:
+                        switch (mode) {
+                            case Line:
+                                mode = Mode.StrictLine;
+                                break;
+                            case StrictLine:
+                                mode = Mode.Line;
+                                break;
+                            case Rectangle:
+                                mode = Mode.Polygon;
+                                break;
+                            case Polygon:
+                                mode = Mode.Rectangle;
+                                break;
+                        }
                         if (mode == Mode.Line) {
-                            mode = Mode.StrictLine;
+
                             break;
                         }
                         if (mode == Mode.StrictLine)
@@ -260,9 +354,21 @@ public class Controller2D {
                     case KeyEvent.VK_P:
                         setMode(Mode.Polygon);
                         break;
+                    case KeyEvent.VK_M:
+                        if (mode == Mode.Polygon && currentPolygon != null && currentPolygon.getCount() > 2) {
+
+                            polygons.remove(clippingPolygon);
+                            clippingPolygon = currentPolygon;
+                            clippingPolygon.setColor1(0x00FF00);
+                            clippingPolygon.setColor2(0x00FF00);
+                            polygons.add(clippingPolygon);
+                            initPolygon();
+                        }
+                        break;
                     case KeyEvent.VK_ENTER:
                         if (mode == Mode.Polygon && currentPolygon != null && currentPolygon.getCount() > 2) {
                             polygons.add(currentPolygon);
+                            fillers.add(new ScanLineFiller( polygonRasterizer, lineRasterizer, currentPolygon, 0xFF0000));
                             initPolygon();
                         }
                         break;
