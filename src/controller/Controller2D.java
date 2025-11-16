@@ -42,6 +42,7 @@ public class Controller2D {
     private Point2D originalEditLocation;
     private int color1 = 0xFF0000;
     private int color2 = 0xFF0000;
+    private int color3 = 0x00FF00;
     private ArrayList<Filler> fillers;
 
     public Controller2D(Panel panel) {
@@ -115,9 +116,18 @@ public class Controller2D {
 
     private void drawScene() {
         panel.getRaster().clear();
+
+
+        for (int i = 0; i < polygons.size(); i++) {
+            polygonRasterizer.rasterize(polygons.get(i));
+        }
+        for (int i = 0; i < lines.size(); i++) {
+            lineRasterizer.rasterize(lines.get(i));
+        }
         for (int i = 0; i < fillers.size(); i++) {
             fillers.get(i).fill();
         }
+
         if(clippingPolygon != null && clippingPolygon.getCount() > 2 ) {
             Clipper clipper = new Clipper();
             if(currentPolygon != null && currentPolygon.getCount() > 2) {
@@ -128,8 +138,6 @@ public class Controller2D {
                 ScanLineFiller filler = new ScanLineFiller(polygonRasterizer, lineRasterizer, new Polygon(overlap), 0x0000FF);
                 filler.fill();
             }
-
-
             for (int i = 0; i < polygons.size() ; i++) {
 
                 var current = polygons.get(i);
@@ -140,18 +148,6 @@ public class Controller2D {
                 another.fill();
 
             }
-
-        }
-        for (int i = 0; i < polygons.size(); i++) {
-            polygonRasterizer.rasterize(polygons.get(i));
-        }
-        for (int i = 0; i < lines.size(); i++) {
-            lineRasterizer.rasterize(lines.get(i));
-        }
-        if (mode == Mode.Polygon && currentPolygon != null) {
-
-        } else {
-
         }
 
         switch (mode) {
@@ -209,10 +205,11 @@ public class Controller2D {
             @Override
             public void mousePressed(MouseEvent e) {
                 if(e.getButton() == MouseEvent.BUTTON3) {
-                    fillers.add(new SeedFiller(color1, panel.getRaster(), e.getX(), e.getY()));
+                    fillers.add(new SeedFiller(color3, panel.getRaster(), e.getX(), e.getY()));
                     drawScene();
                     return;
                 }
+
                 switch (mode) {
                     case Mode.Polygon:
                         if (currentPolygon == null || currentPolygon.getCount() < 1) {
@@ -231,7 +228,7 @@ public class Controller2D {
                                     currentPolygon.getPoint(currentPolygon.getCount() - 1), color1, color2);
                             polygons.add(rectangle);
                             fillers.add(new ScanLineFiller( polygonRasterizer, lineRasterizer,
-                                    rectangle, 0xFF0000));
+                                    rectangle, color3));
                             initPolygon();
                             break;
                         }
@@ -313,6 +310,10 @@ public class Controller2D {
                     case KeyEvent.VK_T:
                         color2 = getColorFromDialog(color2);
                         break;
+
+                    case KeyEvent.VK_Y:
+                        color3 = getColorFromDialog(color3);
+                        break;
                     case KeyEvent.VK_E:
                         setMode(Mode.Edit);
                         break;
@@ -368,7 +369,7 @@ public class Controller2D {
                     case KeyEvent.VK_ENTER:
                         if (mode == Mode.Polygon && currentPolygon != null && currentPolygon.getCount() > 2) {
                             polygons.add(currentPolygon);
-                            fillers.add(new ScanLineFiller( polygonRasterizer, lineRasterizer, currentPolygon, 0xFF0000));
+                            fillers.add(new ScanLineFiller( polygonRasterizer, lineRasterizer, currentPolygon, color3));
                             initPolygon();
                         }
                         break;

@@ -22,6 +22,8 @@ public class ScanLineFiller implements  Filler {
         this.color = color;
     }
 
+
+
     @Override
     public void fill() {
         if (polygon.getCount() < 3)
