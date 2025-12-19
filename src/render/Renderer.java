@@ -1,5 +1,6 @@
 package render;
 
+import solid.AxisSet;
 import solid.Solid;
 import rasterize.LineRasterizer;
 import transforms.Col;
@@ -28,6 +29,8 @@ public class Renderer {
             b = b.mul(view);
             a = a.mul(proj);
             b = b.mul(proj);
+            if(cut(a) || cut(b))
+                continue;
             a = a.mul(1/ a.getW());
             b = b.mul(1/b.getW());
             Vec3D vecA = transformToWindow(a);
@@ -56,6 +59,15 @@ public class Renderer {
         return new Vec3D(p).mul(new Vec3D(1, -1, 1))
                 .add(new Vec3D(1, 1, 0))
                 .mul(new Vec3D((double) (width-1)/2, (double)(height - 1)/2, 1));
+    }
+
+    private boolean cut(Point3D p)
+    {
+        double x = p.getX();
+        double y = p.getY();
+        double z = p.getZ();
+        double w = p.getW();
+        return !(x > -w && x < w && y > -w && y < w && z > -w && z < w);
     }
 
     public void setView(Mat4 view) {
