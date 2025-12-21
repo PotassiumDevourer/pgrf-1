@@ -55,11 +55,12 @@ public abstract class Solid {
     }
 
     public void setScale(double scaleX, double scaleY, double scaleZ) {
+
         setModel(getModel().mul(new Mat4Transl(-xTranslate, -yTranslate, -zTranslate)));
         model = getModel().mul(new Mat4Scale(1/this.scaleX, 1/this.scaleY, 1/this.scaleZ));
-        this.scaleX = scaleX;
-        this.scaleY = scaleY;
-        this.scaleZ = scaleZ;
+        this.scaleX = scaleX <= 0 ? 0.001 : scaleX;
+        this.scaleY = scaleY <= 0 ? 0.001 : scaleY;
+        this.scaleZ = scaleZ <= 0 ? 0.001 : scaleZ;
         model = getModel().mul(new Mat4Scale(this.scaleX, this.scaleY,this.scaleZ));
         setModel(getModel().mul(new Mat4Transl(xTranslate, yTranslate, zTranslate)) );
     }
