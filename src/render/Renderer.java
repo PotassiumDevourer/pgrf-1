@@ -36,7 +36,7 @@ public class Renderer {
             Vec3D vecA = transformToWindow(a);
             Vec3D vecB = transformToWindow(b);
 
-            int endColor = solid.isSelected() ? 0x00FF00 : solid.getCb().get(indexA).getRGB();
+            int endColor = solid.isSelected() ? 0x00FF00 : solid.getCb().get(indexA/2).getRGB();
             lineRasterizer.rasterize(
                     (int)Math.round(vecA.getX()),
                     (int)Math.round(vecA.getY()),

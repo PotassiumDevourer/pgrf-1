@@ -18,7 +18,9 @@ public abstract class Solid {
     protected double zTranslate = 0;
     
     protected boolean isSelected = false;
-    protected double scale = 1.0;
+    protected double scaleX = 1.0;
+    protected double scaleY = 1.0;
+    protected double scaleZ = 1.0;
 
     public boolean isSelected() {
         return isSelected;
@@ -40,14 +42,26 @@ public abstract class Solid {
         return cb;
     }
 
-    public double getScale() {
-        return scale;
+    public double getScaleX() {
+        return scaleX;
     }
 
-    public void setScale(double scale) {
-        getModel().mul(new Mat4Scale(1/this.scale));
-        this.scale = scale;
-        getModel().mul(new Mat4Scale(scale));
+    public double getScaleY() {
+        return scaleY;
+    }
+
+    public double getScaleZ() {
+        return scaleZ;
+    }
+
+    public void setScale(double scaleX, double scaleY, double scaleZ) {
+        setModel(getModel().mul(new Mat4Transl(-xTranslate, -yTranslate, -zTranslate)));
+        model = getModel().mul(new Mat4Scale(1/this.scaleX, 1/this.scaleY, 1/this.scaleZ));
+        this.scaleX = scaleX;
+        this.scaleY = scaleY;
+        this.scaleZ = scaleZ;
+        model = getModel().mul(new Mat4Scale(this.scaleX, this.scaleY,this.scaleZ));
+        setModel(getModel().mul(new Mat4Transl(xTranslate, yTranslate, zTranslate)) );
     }
 
     public void move(double x, double y, double z) {
@@ -75,7 +89,7 @@ public abstract class Solid {
 
     protected void addIndices(int color, Integer... indices) {
         ib.addAll(Arrays.asList(indices));
-        for (int i = 0; i <= indices.length / 2; i++) {
+        for (int i = 0; i < (indices.length / 2); i++) {
             cb.add(new Color(color));
         }
     }

@@ -5,8 +5,10 @@ import transforms.Cubic;
 import transforms.Mat4;
 import transforms.Point3D;
 
-public class CubicModel extends  Solid {
+public class CubicModel extends  Solid implements Segmentable {
     Point3D p1, p2, p3, p4;
+    Cubic calculationMatrix;
+    int currentSegments;
 
     public CubicModel( Point3D p1, Point3D p2, Point3D p3, Point3D p4, CubicType cubic, int segments) {
         this.p1 = p1;
@@ -25,7 +27,22 @@ public class CubicModel extends  Solid {
                 currentCubic = Cubic.FERGUSON;
                 break;
         }
-        var calculationMatrix = new Cubic(currentCubic, p1,p2,p3,p4);
+        calculationMatrix = new Cubic(currentCubic, p1,p2,p3,p4);
+        setCurrentSegments(segments);
+
+    }
+
+    public int getCurrentSegments() {
+        return currentSegments;
+    }
+
+    public void setCurrentSegments(int segments) {
+        if(segments < 1) {
+            return;
+        }
+        this.currentSegments = segments;
+        vb.clear();
+        ib.clear();
         for (int i = 0; i <= segments ; i++) {
             double t = (double) i / segments;
             vb.add(calculationMatrix.compute(t));
@@ -33,6 +50,5 @@ public class CubicModel extends  Solid {
                 addIndices(0xFF0000 ,i, i + 1);
             }
         }
-
     }
 }

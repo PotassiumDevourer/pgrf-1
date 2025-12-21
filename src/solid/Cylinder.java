@@ -4,10 +4,31 @@ import java.util.ArrayList;
 import model.Point2D;
 import transforms.Point3D;
 
-public class Cylinder extends Solid{
+public class Cylinder extends Solid implements Segmentable{
+    int currentSegments;
+    public Cylinder(int segments) {
 
-    public Cylinder() {
-        var circle = calculateCirclePoints(0,0,0.5,10);
+      setCurrentSegments(segments);
+    }
+
+    @Override
+    public int getCurrentSegments() {
+        return currentSegments;
+    }
+
+    @Override
+    public void setCurrentSegments(int segments) {
+        if(segments < 1) {
+            return;
+        }
+        this.currentSegments = segments;
+        createCylinder(segments);
+    }
+
+    private void createCylinder(int segments) {
+        vb.clear();
+        ib.clear();
+        var circle = calculateCirclePoints(0,0,0.5,segments);
         circle.sort((a, b) -> {
             double angleA = Math.atan2(a.getY() - 0, a.getX() - 0);
             double angleB = Math.atan2(b.getY() - 0, b.getX() - 0);

@@ -40,8 +40,8 @@ public class Controller3D {
     private RenderingMode currentRenderingMode;
     private CardLayout contextHelp;
     private JPanel pContextHelp;
-
-
+    private Timer timer;
+    private Label lsegmentationHint;
 
     public Controller3D(Panel panel) {
         this.panel = panel;
@@ -58,7 +58,7 @@ public class Controller3D {
         pageFooter.add(renderingModeContainer);
 
         var boxLayout = new BoxLayout(pageHeader, BoxLayout.X_AXIS);
-        pageHeader.add(new JLabel("M - Move R - Rotate S - Scale "));
+        pageHeader.add(new JLabel("M - Move R - Rotate L - Scale F - animate "));
         panel.setLayout(new BorderLayout());
         panel.add(pageHeader, BorderLayout.PAGE_START);
         panel.add(pageFooter, BorderLayout.PAGE_END);
@@ -78,9 +78,14 @@ public class Controller3D {
 
         initObjects();
         drawScene();
+        timer = new Timer(16, e -> animate());
 
 
+    }
 
+    private void animate(){
+        solids.get(selectedSolid).rotate(8, RotationAxis.Z);
+        drawScene();
     }
 
     private void prepareContextCards() {
@@ -107,14 +112,17 @@ public class Controller3D {
         JPanel pScale = new JPanel();
         BoxLayout l3 = new BoxLayout( pScale, BoxLayout.Y_AXIS);
         pScale.setLayout(l3);
+        lsegmentationHint = new Label("O/P - change rendering accuracy");
+        lsegmentationHint.setVisible(false);
         pScale.add(new Label("Current mode: Scaling"));
         pScale.add(new Label("Q/E - switch between objects"));
         pScale.add(new Label("Arrow Keys - scale objects"));
+        pScale.add(new Label("CTRL + UP/DOWN  - scale objects on the Z axis"));
+        pScale.add(lsegmentationHint);
 
 
 
-
-
+        pContextHelp.add(pScale, Modes3D.Scale.name());
         pContextHelp.add(pRotate, Modes3D.Rotation.name());
 
 
@@ -123,8 +131,38 @@ public class Controller3D {
 
     private void initObjects() {
         solids = new ArrayList<Solid>();
-        //solids.add(new Cube());
-        solids.add(new CubicModel(new Point3D(0,-1, 0), new Point3D(0.2, 0,0), new Point3D(0.6, -0.8, 0), new Point3D(1,1,0), CubicType.Coons, 64));
+        var cube = new Cube();
+        cube.setScale(0.5,0.5,0.5);
+        cube.move(1,1,1);
+        solids.add(cube);
+        var cylinder = new Cylinder(10);
+        cylinder.setScale(0.5,0.5,0.5);
+        solids.add(cylinder);
+        solids.add(new CubicModel(
+                new Point3D(0.0,0, -1.0),
+                new Point3D(0.3,0,  1.2),
+                new Point3D(0.7,0, -1.2),
+                new Point3D(1.2, 0, 0.0),
+                CubicType.Bezier,
+                64
+        ));
+        solids.add(new CubicModel(
+                new Point3D(1.2,0,  0.0),
+                new Point3D(1.6,0,  0.8),
+                new Point3D(2.0,0, -0.8),
+                new Point3D(2.4, 0, 0.0),
+                CubicType.Coons,
+                64
+        ));
+        solids.add(new CubicModel(
+                new Point3D(2.4,0,  0.0),
+                new Point3D(2.9, 0, 1.0),
+                new Point3D(3.1, 0,-1.0),
+                new Point3D(3.6,0, -0.2),
+                CubicType.Ferguson,
+                64
+        ));
+
         setSelectedSolid(0);
     }
 
@@ -155,6 +193,15 @@ public class Controller3D {
             return;
         solids.get(selectedSolid).setSelected(false);
         solids.get(index).setSelected(true);
+        if(solids.get(index) instanceof Segmentable) {
+            lsegmentationHint.setVisible(true);
+            panel.revalidate();
+        }
+        else {
+            lsegmentationHint.setVisible(false);
+            panel.revalidate();
+        }
+
         selectedSolid = index;
     }
 
@@ -204,6 +251,16 @@ public class Controller3D {
             @Override
             public void keyPressed(KeyEvent e) {
                 switch (e.getKeyCode()) {
+                    case KeyEvent.VK_F:
+                        if(timer.isRunning()) {
+                            timer.stop();
+                        }
+                        else {
+                            timer.start();
+                        }
+
+
+                        break;
                     case KeyEvent.VK_Q:
                         setSelectedSolid( selectedSolid - 1);
                         break;
@@ -214,7 +271,12 @@ public class Controller3D {
                         setSelectedSolid( selectedSolid + 1);
                         break;
                     case KeyEvent.VK_LEFT:
+
                         switch (currentMode) {
+                            case Modes3D.Scale:
+                                var selected = solids.get(selectedSolid);
+                                selected.setScale(selected.getScaleX() - 0.1, selected.getScaleY(), selected.getScaleZ());
+                                break;
                             case Modes3D.Translate:
                                 solids.get(selectedSolid).move(-0.5, 0, 0);
                                 break;
@@ -225,6 +287,10 @@ public class Controller3D {
                         break;
                     case KeyEvent.VK_RIGHT:
                         switch (currentMode) {
+                            case Modes3D.Scale:
+                                var selected = solids.get(selectedSolid);
+                                selected.setScale(selected.getScaleX() + 0.1, selected.getScaleY(), selected.getScaleZ());
+                                break;
                             case Modes3D.Translate:
                                 solids.get(selectedSolid).move(0.5, 0, 0);
                                 break;
@@ -235,6 +301,13 @@ public class Controller3D {
                         break;
                     case KeyEvent.VK_UP:
                         switch (currentMode) {
+                            case Modes3D.Scale:
+                                var selected = solids.get(selectedSolid);
+                                if(e.isControlDown())
+                                    selected.setScale(selected.getScaleX(), selected.getScaleY(), selected.getScaleZ() + 0.5);
+                                else
+                                    selected.setScale(selected.getScaleX(), selected.getScaleY() + 0.5, selected.getScaleZ());
+                                break;
                             case Modes3D.Translate:
                                 if(e.isControlDown())
                                     solids.get(selectedSolid).move(0, 0.0, 0.5);
@@ -246,6 +319,13 @@ public class Controller3D {
                         break;
                     case KeyEvent.VK_DOWN:
                         switch (currentMode) {
+                            case Modes3D.Scale:
+                                var selected = solids.get(selectedSolid);
+                                if(e.isControlDown())
+                                    selected.setScale(selected.getScaleX(), selected.getScaleY(), selected.getScaleZ() - 0.5);
+                                else
+                                    selected.setScale(selected.getScaleX(), selected.getScaleY() - 0.5, selected.getScaleZ());
+                                break;
                             case Modes3D.Translate:
                                 if(e.isControlDown())
                                     solids.get(selectedSolid).move(0,0 , -0.5);
@@ -255,8 +335,29 @@ public class Controller3D {
 
                         }
                         break;
+                    case KeyEvent.VK_P:
+                            var current = solids.get(selectedSolid);
+                            if(currentMode == Modes3D.Scale && current instanceof Segmentable) {
+                                var segmentable = (Segmentable)current;
+                                segmentable.setCurrentSegments(segmentable.getCurrentSegments() + 1);
+                                drawScene();
+                            }
+
+                        break;
+                    case KeyEvent.VK_O:
+                        current = solids.get(selectedSolid);
+                        if(currentMode == Modes3D.Scale && current instanceof Segmentable) {
+                            var segmentable = (Segmentable)current;
+                            segmentable.setCurrentSegments(segmentable.getCurrentSegments() - 1);
+                            drawScene();
+                        }
+
+                        break;
                     case KeyEvent.VK_R:
                         setCurrentMode(Modes3D.Rotation);
+                        break;
+                    case KeyEvent.VK_L:
+                        setCurrentMode(Modes3D.Scale);
                         break;
                     case KeyEvent.VK_M:
                         setCurrentMode(Modes3D.Translate);
